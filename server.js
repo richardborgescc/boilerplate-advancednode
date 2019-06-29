@@ -14,7 +14,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine','pug');
 app.route('/')
   .get((req, res) => {
-    res.render(process.cwd() + '/views/pug/index', {title: 'Hello', message: 'Please login'});
+    res.render(
+      process.cwd() + '/views/pug/index', 
+      {title: 'Hello', message: 'Please login'}
+    );
   });
 
 app.listen(process.env.PORT || 3000, () => {
