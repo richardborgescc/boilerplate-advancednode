@@ -5,6 +5,7 @@ const bodyParser  = require('body-parser');
 const fccTesting  = require('./freeCodeCamp/fcctesting.js');
 const session     = require('express-session');
 const passport    = require('passport');
+const ObjectID = require('mongodb').ObjectID;
 process.env.SESSION_SECRET = 14;
 
 const app = express();
@@ -31,6 +32,22 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+   done(null, user._id);
+ });
+
+passport.deserializeUser((id, done) => {
+  done(null, null);
+  /*
+  db.collection('users').findOne(
+      {_id: new ObjectID(id)},
+      (err, doc) => {
+          done(null, doc);
+      }
+  );
+  */
+});
 
 app.listen(process.env.PORT || 3000, () => {
   console.log("Listening on port " + process.env.PORT);
