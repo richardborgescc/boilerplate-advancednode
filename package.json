@@ -16,7 +16,9 @@
     "body-parser": "^1.19.0",
     "mongodb": "^3.2.6",
     "helmet": "^3.18.0",
-    "pug": "^2.0.3"
+    "pug": "^2.0.3",
+    "passport": "^0.4.0",
+    "express-session": "^1.16.1"
   },
   "engines": {
     "node": "10.0.0"
