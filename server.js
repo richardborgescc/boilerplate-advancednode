@@ -6,6 +6,7 @@ const fccTesting  = require('./freeCodeCamp/fcctesting.js');
 const session     = require('express-session');
 const passport    = require('passport');
 const ObjectID = require('mongodb').ObjectID;
+const mongo = require('mongodb').MongoClient;
 process.env.SESSION_SECRET = 14;
 
 const app = express();
@@ -37,16 +38,24 @@ passport.serializeUser((user, done) => {
    done(null, user._id);
  });
 
+process.env.DATABASE = "mongodb+srv://admin:rbcc@cluster0-go8yi.mongodb.net/test?retryWrites=true";
+mongo.connect(process.env.DATABASE, {useNewUrlParser: true}, (err, db) => {
+    if(err) {
+        console.log('Database error: ' + err);
+    } else {
+        console.log('Successful database connection');
+
+        //serialization and app.listen
+
+}});
+
 passport.deserializeUser((id, done) => {
-  done(null, null);
-  /*
-  db.collection('users').findOne(
+  mongo.collection('users').findOne(
       {_id: new ObjectID(id)},
       (err, doc) => {
           done(null, doc);
       }
   );
-  */
 });
 
 app.listen(process.env.PORT || 3000, () => {
