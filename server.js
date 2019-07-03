@@ -7,6 +7,7 @@ const session     = require('express-session');
 const passport    = require('passport');
 const ObjectID = require('mongodb').ObjectID;
 const mongo = require('mongodb').MongoClient;
+const LocalStrategy = require('passport-local');
 process.env.SESSION_SECRET = 14;
 
 const app = express();
@@ -45,9 +46,19 @@ mongo.connect(process.env.DATABASE, {useNewUrlParser: true}, (err, db) => {
     } else {
         console.log('Successful database connection');
 
-        //serialization and app.listen
-
-}});
+        passport.use(new LocalStrategy(
+          function(username, password, done) {
+            db.collection('users').findOne({ username: username }, function (err, user) {
+              console.log('User '+ username +' attempted to log in.');
+              if (err) { return done(err); }
+              if (!user) { return done(null, false); }
+              if (password !== user.password) { return done(null, false); }
+              return done(null, user);
+          });
+        }
+      ));
+  }
+});
 
 passport.deserializeUser((id, done) => {
   mongo.collection('users').findOne(
