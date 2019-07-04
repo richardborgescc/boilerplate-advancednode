@@ -18,13 +18,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set('view engine','pug');
-app.route('/')
-  .get((req, res) => {
-    res.render(
-      process.cwd() + '/views/pug/index', 
-      {title: 'Hello', message: 'Please login'}
-    );
-  });
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -40,33 +33,53 @@ passport.serializeUser((user, done) => {
  });
 
 process.env.DATABASE = "mongodb+srv://admin:rbcc@cluster0-go8yi.mongodb.net/test?retryWrites=true";
-mongo.connect(process.env.DATABASE, {useNewUrlParser: true}, (err, db) => {
+mongo.connect(process.env.DATABASE, {useNewUrlParser: true}, (err, client) => {
+    var db = client.db('myproject');
     if(err) {
         console.log('Database error: ' + err);
     } else {
         console.log('Successful database connection');
+      
+      passport.deserializeUser((id, done) => {
+        mongo.collection('users').findOne(
+            {_id: new ObjectID(id)},
+            (err, doc) => {
+                done(null, doc);
+            }
+        );
+      });
 
-        passport.use(new LocalStrategy(
-          function(username, password, done) {
-            db.collection('users').findOne({ username: username }, function (err, user) {
-              console.log('User '+ username +' attempted to log in.');
-              if (err) { return done(err); }
-              if (!user) { return done(null, false); }
-              if (password !== user.password) { return done(null, false); }
-              return done(null, user);
-          });
-        }
-      ));
-  }
-});
-
-passport.deserializeUser((id, done) => {
-  mongo.collection('users').findOne(
-      {_id: new ObjectID(id)},
-      (err, doc) => {
-          done(null, doc);
+      passport.use(new LocalStrategy(
+        function(username, password, done) {
+          db.collection('users').findOne({ username: username }, function (err, user) {
+            console.log('User '+ username +' attempted to log in.');
+            if (err) { return done(err); }
+            if (!user) { return done(null, false); }
+            if (password !== user.password) { return done(null, false); }
+            return done(null, user);
+        });
       }
-  );
+    ));
+      
+    app.route('/')
+    .get((req, res) => {
+      res.render(
+        process.cwd() + '/views/pug/index', 
+        {title: 'Hello', message: 'login', showLogin: true}
+      );
+    });
+      
+    app.route('/login')
+    .post(passport.authenticate('local', { failureRedirect: '/' }),(req,res) => {
+               res.redirect('/profile');
+    });
+      
+    app.route('/profile')
+          .get((req,res) => {
+               res.render(process.cwd() + '/views/pug/profile');
+          });
+
+  }
 });
 
 app.listen(process.env.PORT || 3000, () => {
