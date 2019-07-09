@@ -19,7 +19,8 @@
     "pug": "^2.0.3",
     "passport": "^0.4.0",
     "passport-local": "^1.0.0",
-    "express-session": "^1.16.1"
+    "express-session": "^1.16.1",
+    "bcrypt": "^3.0.6"
   },
   "engines": {
     "node": "10.0.0"
