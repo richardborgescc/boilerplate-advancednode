@@ -9,6 +9,10 @@ const ObjectID = require('mongodb').ObjectID;
 const mongo = require('mongodb').MongoClient;
 const LocalStrategy = require('passport-local');
 const bcrypt = require('bcrypt');
+
+const routes = require('./routes.js');
+const auth = require('./auth.js');
+
 process.env.SESSION_SECRET = 14;
 process.env.ENABLE_DELAYS = true;
 
@@ -20,6 +24,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set('view engine','pug');
+
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -58,6 +63,8 @@ if (process.env.ENABLE_DELAYS) app.use((req, res, next) => {
 process.env.DATABASE = "mongodb+srv://admin:rbcc@cluster0-go8yi.mongodb.net/test?retryWrites=true";
 mongo.connect(process.env.DATABASE, {useNewUrlParser: true}, (err, client) => {
     let db = client.db('myproject');
+    auth(app, db);
+  
     if(err) {
         console.log('Database error: ' + err);
     } else {
@@ -84,71 +91,10 @@ mongo.connect(process.env.DATABASE, {useNewUrlParser: true}, (err, client) => {
       }
     ));
       
-    app.route('/')
-    .get((req, res) => {
-      res.render(
-        process.cwd() + '/views/pug/index', 
-        {title: 'Hello', message: 'login', showLogin: true, showRegistration: true}
-      );
-    });
-      
-    app.route('/login')
-    .post(passport.authenticate('local', { failureRedirect: '/' }),(req,res) => {
-               res.redirect('/profile');
-    });
-    
-    app.route('/profile')
-      .get(ensureAuthenticated, (req,res) => {
-           res.render(process.cwd() + '/views/pug/profile', {username: req.user.username});
-    });
-      
-    app.route('/register')
-    .post((req, res, next) => {
-        db.collection('users').findOne({ username: req.body.username }, function (err, user) {
-            if(err) {
-                next(err);
-            } else if (user) {
-                res.redirect('/');
-            } else {
-                db.collection('users').insertOne(
-                  {username: req.body.username,
-                   password: bcrypt.hashSync(req.body.password, 12)},
-                  (err, doc) => {
-                      if(err) {
-                          res.redirect('/');
-                      } else {
-                          next(null, user);
-                      }
-                  }
-                )
-            }
-        })},
-      passport.authenticate('local', {
-        successRedirect: '/profile',
-        failureRedirect: '/'
-      })
-  );
-
-    app.route('/logout')
-      .get((req, res) => {
-          req.logout();
-          res.redirect('/');
-    });
-      
-    app.use((req, res, next) => {
-      res.status(404)
-        .type('text')
-        .send('Not Found');
-    });
+    routes(app, db);
   }
 });
 
-function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-      return next();
-  }
-  res.redirect('/');
-};
 
 app.listen(process.env.PORT || 3000, () => {
   console.log("Listening on port " + process.env.PORT);
